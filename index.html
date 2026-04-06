@@ -12,8 +12,8 @@
 
     body {
       display: flex;
-      justify-content: center; /* horizontal center */
-      align-items: center;     /* vertical center */
+      justify-content: center;
+      align-items: center;
       background: #fff;
     }
 
@@ -32,31 +32,35 @@
       font-family: Futura, "Trebuchet MS", Arial, sans-serif;
       font-size: 12px;
       color: #000;
+    }
 
     .information {
       margin-top: 25px;
-      font-family: Futura, Arial;
+      font-family: Futura, Arial, sans-serif;
       font-size: 10px;
       color: #000;
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
-      a,
-      a:visited,
-      a:hover,
-      a:active {
-        text-decoration: none;                  /* no underline */
-        color: black;                           /* not purple */
-        font-family: Helvetica, Arial, sans-serif; /* not serif */
-      }
 
-      
+    .information a,
+    .information a:visited,
+    .information a:hover,
+    .information a:active {
+      text-decoration: none;
+      color: inherit;
+      font-family: inherit;
     }
   </style>
 </head>
 <body>
   <div class="center">
     <div class="hello">matcha molly</div>
-    <div class="welcome"> *✧･ﾟ:**:･ﾟ✧*:･ﾟ on the internet ੈ✩‧₊˚˚ ༘♡ ⋆｡˚✧･ﾟ</div>
-    <div class="information"><a href="https://raw.githubusercontent.com/wearecharm777/privacy-policy/refs/heads/main/marketing">Marketing</a>
+    <div class="welcome">*✧･ﾟ:**:･ﾟ✧*:･ﾟ on the internet ੈ✩‧₊˚˚ ༘♡ ⋆｡˚✧･ﾟ</div>
+    <div class="information">
+      <a href="https://raw.githubusercontent.com/wearecharm777/privacy-policy/refs/heads/main/marketing">Marketing</a>
       <a href="https://raw.githubusercontent.com/wearecharm777/privacy-policy/refs/heads/main/privacy%20policy">Privacy Policy</a>
       <a href="https://raw.githubusercontent.com/wearecharm777/privacy-policy/refs/heads/main/support">Support</a>
     </div>
