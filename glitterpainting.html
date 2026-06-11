@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>untitled - GlitterPaint ♡</title>
+<style>
+  :root{
+    /* themed chrome tokens (swapped by the Theme picker) */
+    --hot:#e84393;
+    --soft:#f7a6cd;
+    --softer:#fbd0e6;
+    --chrome:#fbe3ee;
+    --chrome-dark:#eebcd2;
+    --bevel-light:#fff4fa;
+    --bevel-dark:#c2849f;
+    --bevel-darker:#8f5570;
+    --ink:#3a2230;
+    --sub:#8f3c66;
+    --grad-a:#fdd6eb;
+    --grad-b:#f7a8c4;
+    --grad-c:#e84393;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; width:100%; overflow:hidden;}
+  body{
+    font-family:Tahoma,'MS Sans Serif',Verdana,sans-serif;
+    color:var(--ink);
+    /* fallback if the backdrop image is missing */
+    background:linear-gradient(135deg,#fdd6eb,#f7a8c4 40%,#e84393);
+    -webkit-user-select:none; user-select:none;
+  }
+
+  /* ===== the desktop ===== */
+  .desktop{
+    position:fixed; inset:0;
+    background:url('bliss-bead-fine.jpg') center/cover no-repeat;
+    display:flex; align-items:center; justify-content:center;
+  }
+  /* glossy sheen sweeping the desktop */
+  .gloss{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:
+      linear-gradient(112deg, rgba(255,255,255,.42), rgba(255,255,255,0) 26%),
+      linear-gradient(294deg, rgba(255,255,255,.22), rgba(255,255,255,0) 28%),
+      radial-gradient(130% 65% at 50% -12%, rgba(255,255,255,.30), rgba(255,255,255,0) 55%);
+  }
+
+  /* ===== desktop icons ===== */
+  .icons-left,.icons-right{
+    position:absolute; top:0; bottom:0; z-index:2;
+    display:flex; flex-direction:column; justify-content:space-evenly;
+    padding:12px 4px;
+  }
+  .icons-left{left:88px;}
+  .icons-right{right:88px;}
+  .dicon{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; cursor:pointer; font-family:inherit;
+    padding:4px;
+  }
+  .dicon svg{filter:drop-shadow(1px 2px 0 rgba(20,20,50,.35));}
+  .dicon:active svg{transform:translateY(1px);}
+  .dicon .dlabel{
+    font-size:11px; color:#fff; letter-spacing:.3px;
+    text-shadow:1px 1px 0 #1b1b3a, -1px 1px 0 #1b1b3a, 1px -1px 0 #1b1b3a, -1px -1px 0 #1b1b3a;
+  }
+
+  /* ===== the editor window (floating, centered) ===== */
+  .window{
+    position:relative; z-index:5;
+    width:min(94vw,880px);
+    height:min(94vh,940px);
+    height:min(94dvh,940px);
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-darker) var(--bevel-darker) var(--bevel-light);
+    box-shadow:7px 7px 0 rgba(30,20,60,.35);
+    display:flex; flex-direction:column;
+  }
+
+  .titlebar{
+    display:flex; align-items:center; gap:8px;
+    padding:4px 6px;
+    background:linear-gradient(90deg,var(--hot),var(--soft) 60%,var(--softer));
+    color:#fff; flex:none;
+  }
+  .titlebar .app-icon{font-size:15px; filter:drop-shadow(1px 1px 0 rgba(0,0,0,.25));}
+  .titlebar .title{
+    flex:1; font-size:14px; font-weight:bold; letter-spacing:.3px;
+    text-shadow:1px 1px 0 rgba(0,0,0,.3);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .winbtns{display:flex; gap:3px;}
+  .winbtn{
+    width:22px; height:20px; font-size:11px; font-weight:bold; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink); cursor:pointer;
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-dark) var(--bevel-dark) var(--bevel-light);
+    background:var(--chrome);
+  }
+  .winbtn:active{border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);}
+
+  .menubar{
+    display:flex; gap:2px; padding:4px 6px; flex-wrap:wrap; flex:none;
+    border-bottom:1px solid var(--chrome-dark);
+    font-size:14px;
+    position:relative;
+  }
+  .menubtn{
+    padding:3px 12px; cursor:pointer; background:transparent;
+    border:2px solid transparent; font-family:inherit; font-size:14px; color:var(--ink);
+  }
+  .menubtn:hover{border-color:var(--bevel-light) var(--bevel-dark) var(--bevel-dark) var(--bevel-light);}
+  .menubtn:active{border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);}
+
+  /* theme picker dropdown */
+  .theme-pop{
+    position:absolute; top:100%; right:6px; z-index:30;
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-darker) var(--bevel-darker) var(--bevel-light);
+    box-shadow:4px 4px 0 rgba(30,20,60,.3);
+    display:none; flex-direction:column; min-width:130px;
+  }
+  .theme-pop.open{display:flex;}
+  .theme-item{
+    display:flex; align-items:center; gap:8px;
+    padding:6px 10px; font-size:12px; cursor:pointer; background:transparent;
+    border:none; font-family:inherit; color:var(--ink); text-align:left;
+  }
+  .theme-item:hover{background:var(--hot); color:#fff;}
+  .theme-item .tdot{
+    width:14px; height:14px; flex:none; border:1px solid var(--bevel-darker);
+  }
+
+  .body{display:flex; flex:1; min-height:0; position:relative;}
+
+  .toolcol{
+    padding:8px 6px;
+    display:grid;
+    grid-template-columns:repeat(2,38px);
+    grid-auto-rows:36px;
+    gap:4px;
+    align-content:start;
+    background:var(--chrome);
+    overflow-y:auto;
+    flex:none;
+  }
+  .tool{
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; cursor:pointer; background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-dark) var(--bevel-dark) var(--bevel-light);
+    position:relative;
+  }
+  .tool:active, .tool.active{
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+    background:var(--chrome-dark);
+  }
+  .tool .tip{
+    position:absolute; left:50%; top:-26px; transform:translateX(-50%);
+    background:#fffbe6; border:1px solid var(--bevel-darker);
+    font-size:10px; padding:2px 6px; white-space:nowrap; color:var(--ink);
+    display:none; z-index:40; pointer-events:none;
+  }
+  .tool:hover .tip{display:block;}
+
+  .canvas-zone{
+    flex:1; position:relative; margin:8px 8px 8px 4px;
+    border:2px solid;
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+    background:linear-gradient(135deg,var(--grad-a) 0%,var(--grad-b) 40%,var(--grad-c) 100%);
+    overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    min-height:0; min-width:0;
+  }
+  #photo{
+    position:relative; z-index:2;
+    max-width:96%; max-height:96%;
+    box-shadow:3px 3px 0 rgba(40,20,60,.35);
+    display:none;
+  }
+  .load-hint{
+    position:relative; z-index:2; cursor:pointer; text-align:center;
+    background:rgba(255,250,253,.92);
+    border:2px dashed var(--hot);
+    padding:18px 22px; font-size:13px; line-height:1.6; color:var(--sub);
+  }
+  .load-hint b{font-size:15px;}
+
+  /* floating panels hover over the image box */
+  .float-panel{
+    position:absolute; top:8px; z-index:20;
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-darker) var(--bevel-darker) var(--bevel-light);
+    box-shadow:4px 4px 0 rgba(30,20,60,.35);
+    display:none; flex-direction:column;
+    max-height:calc(100% - 16px);
+  }
+  .float-panel.open{display:flex;}
+  .fp-title{
+    background:linear-gradient(90deg,var(--hot),var(--soft));
+    color:#fff; font-size:11px; font-weight:bold;
+    padding:3px 6px; letter-spacing:.4px;
+    display:flex; justify-content:space-between; align-items:center;
+    flex:none;
+  }
+  .fp-x{cursor:pointer; padding:0 4px;}
+
+  #filterPanel{left:6px; width:138px;}
+  .filter-list{overflow-y:auto;}
+  .filter-item{
+    display:flex; align-items:center; gap:7px;
+    padding:6px 8px; font-size:12px; cursor:pointer; background:transparent;
+    border:none; font-family:inherit; color:var(--ink); text-align:left; width:100%;
+  }
+  .filter-item:hover{background:var(--hot); color:#fff;}
+  .filter-item .swatch{width:14px; height:14px; flex:none; border:1px solid var(--bevel-darker);}
+
+  #galleryPanel{right:6px; left:6px;}
+  .gal-grid{
+    overflow-y:auto; padding:8px;
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px;
+  }
+  .gal-item{
+    border:2px solid;
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+    background:#fff; padding:3px; display:flex; flex-direction:column; gap:3px;
+  }
+  .gal-item img{width:100%; height:78px; object-fit:cover; display:block;}
+  .gal-actions{display:flex; justify-content:space-between;}
+  .gal-actions button{
+    flex:1; font-size:11px; cursor:pointer; background:var(--chrome);
+    border:1px solid var(--bevel-darker); font-family:inherit; padding:2px 0;
+  }
+  .gal-actions button:active{background:var(--chrome-dark);}
+  .gal-empty{padding:16px; font-size:12px; text-align:center; color:var(--sub);}
+
+  /* curves panel */
+  #curvePanel{left:6px; width:248px; padding-bottom:8px;}
+  .curve-channels{display:flex; gap:4px; padding:6px 8px 2px;}
+  .chbtn{
+    flex:1; font-family:inherit; font-size:11px; font-weight:bold; cursor:pointer;
+    padding:3px 0; color:var(--ink);
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-dark) var(--bevel-dark) var(--bevel-light);
+  }
+  .chbtn.active{
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+    background:var(--chrome-dark);
+  }
+  #curveCanvas{
+    margin:6px 8px 2px; background:#fff;
+    border:2px solid;
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+    touch-action:none; cursor:crosshair;
+    width:228px; height:228px;
+  }
+  .curve-hint{font-size:10px; color:var(--sub); text-align:center; padding:2px 8px 0;}
+  .curve-reset{margin:4px 8px 0; align-self:stretch;}
+
+  .bottom{
+    display:flex; align-items:center; gap:8px;
+    padding:7px 8px;
+    border-top:1px solid var(--chrome-dark);
+    min-height:64px; flex:none;
+  }
+  .current-color{
+    position:relative; width:40px; height:40px; flex:none;
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+  }
+  .current-color .cc-a,.current-color .cc-b{
+    position:absolute; width:20px; height:20px; border:1px solid var(--bevel-darker);
+  }
+  .current-color .cc-a{left:4px; top:4px; background:var(--hot); z-index:2;}
+  .current-color .cc-b{right:4px; bottom:4px; background:var(--softer);}
+
+  .palette{
+    flex:1;
+    display:grid;
+    grid-template-columns:repeat(14,1fr);
+    grid-template-rows:repeat(2,22px);
+    gap:3px;
+  }
+  .cube{
+    border:2px solid;
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+    background:#fff; cursor:pointer;
+  }
+
+  .intensity{flex:1; display:none; flex-direction:column; align-items:center; gap:4px;}
+  .intensity.show{display:flex;}
+  .intensity label{font-size:12px; font-weight:bold; color:var(--sub); letter-spacing:.3px;}
+  .slider-stack{width:100%; max-width:460px; display:flex; flex-direction:column; gap:2px;}
+  .srow{display:flex; align-items:center; gap:6px;}
+  .srow .sl{font-size:11px; width:64px; text-align:right; color:var(--sub); flex:none;}
+  .srow .sl:empty{display:none;}
+  .srow input[type=range]{
+    flex:1; height:24px;
+    -webkit-appearance:none; appearance:none;
+    background:transparent; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:8px; background:var(--chrome-dark);
+    border:2px solid;
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:16px; height:26px; margin-top:-11px;
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-darker) var(--bevel-darker) var(--bevel-light);
+  }
+  input[type=range]::-moz-range-track{
+    height:8px; background:var(--chrome-dark);
+    border:2px solid;
+    border-color:var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px; height:24px; border-radius:0;
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-darker) var(--bevel-darker) var(--bevel-light);
+  }
+  .btnrow{display:flex; gap:8px;}
+  .pbtn{
+    font-family:inherit; font-size:12px; font-weight:bold; color:var(--ink);
+    padding:4px 18px; cursor:pointer;
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-darker) var(--bevel-darker) var(--bevel-light);
+  }
+  .pbtn:active{border-color:var(--bevel-darker) var(--bevel-light) var(--bevel-light) var(--bevel-darker);}
+  .pbtn.cancel{font-weight:normal;}
+
+  .statusbar{
+    padding:5px 10px; font-size:13px; flex:none;
+    border-top:2px solid;
+    border-color:var(--bevel-dark) transparent transparent transparent;
+    background:var(--chrome);
+    color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* ===== retro message dialog ===== */
+  .dlg-wrap{
+    position:fixed; inset:0; z-index:60;
+    display:none; align-items:center; justify-content:center;
+    background:rgba(40,20,60,.18);
+  }
+  .dlg-wrap.open{display:flex;}
+  .dlg{
+    width:min(86vw,330px);
+    background:var(--chrome);
+    border:2px solid;
+    border-color:var(--bevel-light) var(--bevel-darker) var(--bevel-darker) var(--bevel-light);
+    box-shadow:6px 6px 0 rgba(30,20,60,.35);
+    display:flex; flex-direction:column;
+  }
+  .dlg-body{
+    display:flex; align-items:center; gap:12px;
+    padding:16px 14px; font-size:13px; line-height:1.5;
+  }
+  .dlg-body p{flex:1;}
+  .dlg .pbtn{align-self:center; margin:0 0 12px;}
+
+  @media (max-width:640px){
+    .window{width:96vw; height:94dvh;}
+    .toolcol{grid-template-columns:repeat(2,32px); grid-auto-rows:32px;}
+    .tool{font-size:14px;}
+    .palette{grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(4,18px);}
+    #curvePanel{width:218px;}
+    #curveCanvas{width:198px; height:198px;}
+    .dicon svg{width:38px; height:38px;}
+    .dicon .dlabel{font-size:9px;}
+    .icons-left{left:2px;} .icons-right{right:2px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="desktop">
+  <div class="gloss"></div>
+  <div class="icons-left" id="iconsLeft"></div>
+  <div class="icons-right" id="iconsRight"></div>
+
+  <div class="window">
+
+    <div class="titlebar">
+      <span class="app-icon">🎀</span>
+      <span class="title" id="winTitle">untitled - GlitterPaint ♡</span>
+      <span class="winbtns">
+        <span class="winbtn" title="minimize">▁</span>
+        <span class="winbtn" title="maximize">▢</span>
+        <span class="winbtn" id="btnClose" title="close">✕</span>
+      </span>
+    </div>
+
+    <div class="menubar">
+      <button class="menubtn" id="btnSave">Save</button>
+      <button class="menubtn" id="btnLoad">Load Image</button>
+      <button class="menubtn" id="btnGallery">Gallery</button>
+      <button class="menubtn" id="btnShare">Share</button>
+      <button class="menubtn" id="btnTheme">Theme</button>
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <div class="theme-pop" id="themePop"></div>
+    </div>
+
+    <div class="body">
+
+      <div class="toolcol">
+        <div class="tool" id="btnFilters">✨<span class="tip">filters</span></div>
+        <div class="tool" data-edit="brightness">☀<span class="tip">brightness</span></div>
+        <div class="tool" data-edit="contrast">◐<span class="tip">contrast</span></div>
+        <div class="tool" data-edit="saturation">💧<span class="tip">saturation</span></div>
+        <div class="tool" data-mode="hsl">🎚<span class="tip">HSL</span></div>
+        <div class="tool" data-mode="curves">∿<span class="tip">curves</span></div>
+        <div class="tool" data-edit="hue">🌈<span class="tip">hue shift</span></div>
+        <div class="tool" data-edit="blur">🫧<span class="tip">blur</span></div>
+        <div class="tool" data-instant="rotate">↻<span class="tip">rotate 90°</span></div>
+        <div class="tool" data-instant="flipH">⇋<span class="tip">flip ↔</span></div>
+        <div class="tool" data-instant="flipV">⇵<span class="tip">flip ↕</span></div>
+        <div class="tool" data-instant="invert">◑<span class="tip">invert</span></div>
+        <div class="tool" data-instant="gray">▒<span class="tip">grayscale</span></div>
+        <div class="tool" data-instant="reset">⟲<span class="tip">reset all</span></div>
+      </div>
+
+      <div class="canvas-zone" id="canvasZone">
+        <canvas id="photo"></canvas>
+        <div class="load-hint" id="loadHint">
+          <b>♡ no pic yet ♡</b><br>
+          tap here or hit <u>Load Image</u><br>
+          to start editing, princess
+        </div>
+
+        <!-- floating filter panel -->
+        <div class="float-panel" id="filterPanel">
+          <div class="fp-title">✨ filters <span class="fp-x" data-close="filterPanel">✕</span></div>
+          <div class="filter-list">
+            <button class="filter-item" data-filter="vhs"><span class="swatch" style="background:repeating-linear-gradient(0deg,#3a3a55 0 2px,#7d7da8 2px 4px)"></span>vhs 📼</button>
+            <button class="filter-item" data-filter="digicam"><span class="swatch" style="background:linear-gradient(135deg,#cfe3ef,#f4fbff)"></span>digicam 📸</button>
+            <button class="filter-item" data-filter="ccd"><span class="swatch" style="background:linear-gradient(135deg,#ffd9a8,#fff3da)"></span>ccd ✦</button>
+            <button class="filter-item" data-filter="glitch"><span class="swatch" style="background:repeating-linear-gradient(90deg,#ff71ce 0 3px,#01cdfe 3px 6px)"></span>glitch 👾</button>
+            <button class="filter-item" data-filter="pixelate"><span class="swatch" style="background:conic-gradient(#999 25%,#ddd 25% 50%,#999 50% 75%,#ddd 75%)"></span>pixelate</button>
+            <button class="filter-item" data-filter="posterize"><span class="swatch" style="background:linear-gradient(90deg,#e84393 33%,#f7a6cd 33% 66%,#fbd0e6 66%)"></span>posterize</button>
+            <button class="filter-item" data-filter="thermal"><span class="swatch" style="background:linear-gradient(135deg,#3a0ca3,#f72585,#ffba08)"></span>thermal 🔥</button>
+            <button class="filter-item" data-filter="sparkle"><span class="swatch" style="background:radial-gradient(circle at 30% 30%,#fff 12%,#5d5d8a 14%)"></span>sparkle ✨</button>
+            <button class="filter-item" data-filter="angelcore"><span class="swatch" style="background:radial-gradient(circle,#fff,#f3b8d4)"></span>angelcore 👼</button>
+            <button class="filter-item" data-filter="film"><span class="swatch" style="background:linear-gradient(135deg,#bda184,#e8dcc8)"></span>film 🎞</button>
+            <button class="filter-item" data-filter="lomo"><span class="swatch" style="background:radial-gradient(circle,#e87aa8 30%,#5d2645)"></span>lomo</button>
+            <button class="filter-item" data-filter="dollcore"><span class="swatch" style="background:linear-gradient(135deg,#ff9ec6,#ffd9ec)"></span>dollcore</button>
+            <button class="filter-item" data-filter="vamp"><span class="swatch" style="background:linear-gradient(135deg,#5d2645,#c64f7e)"></span>vamp</button>
+            <button class="filter-item" data-filter="sunbleach"><span class="swatch" style="background:linear-gradient(135deg,#ffe9b8,#fff7e6)"></span>sunbleach</button>
+            <button class="filter-item" data-filter="icy"><span class="swatch" style="background:linear-gradient(135deg,#b8e4ff,#e6f6ff)"></span>icy</button>
+            <button class="filter-item" data-filter="vaporwave"><span class="swatch" style="background:linear-gradient(135deg,#ff71ce,#01cdfe)"></span>vaporwave</button>
+            <button class="filter-item" data-filter="sepia"><span class="swatch" style="background:linear-gradient(135deg,#a9805a,#e6cfa8)"></span>sepia</button>
+            <button class="filter-item" data-filter="noir"><span class="swatch" style="background:linear-gradient(135deg,#222,#bbb)"></span>noir</button>
+            <button class="filter-item" data-filter="dreamy"><span class="swatch" style="background:linear-gradient(135deg,#f3d6ff,#fff)"></span>dreamy</button>
+          </div>
+        </div>
+
+        <!-- floating curves panel -->
+        <div class="float-panel" id="curvePanel">
+          <div class="fp-title">∿ curves <span class="fp-x" data-close="curvePanel">✕</span></div>
+          <div class="curve-channels">
+            <button class="chbtn active" data-ch="rgb">RGB</button>
+            <button class="chbtn" data-ch="r" style="color:#c0392b">R</button>
+            <button class="chbtn" data-ch="g" style="color:#27ae60">G</button>
+            <button class="chbtn" data-ch="b" style="color:#2980b9">B</button>
+          </div>
+          <canvas id="curveCanvas" width="228" height="228"></canvas>
+          <div class="curve-hint">drag the line ♡ double-tap a dot to remove</div>
+          <button class="pbtn curve-reset" id="curveReset">reset channel</button>
+        </div>
+
+        <!-- floating gallery panel -->
+        <div class="float-panel" id="galleryPanel">
+          <div class="fp-title">♡ gallery (saved in your browser) <span class="fp-x" data-close="galleryPanel">✕</span></div>
+          <div class="gal-grid" id="galGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="current-color" title="sampled color">
+        <span class="cc-a" id="ccA"></span>
+        <span class="cc-b" id="ccB"></span>
+      </div>
+
+      <div class="palette" id="palette"></div>
+
+      <div class="intensity" id="intensity">
+        <label id="intLabel">intensity</label>
+        <div class="slider-stack" id="sliderStack"></div>
+        <div class="btnrow">
+          <button class="pbtn" id="btnDone">Done</button>
+          <button class="pbtn cancel" id="btnCancel">cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="statusbar" id="statusbar">For glam, click Load Image and pick a pic. ♡</div>
+  </div>
+
+  <!-- retro y2k message dialog -->
+  <div class="dlg-wrap" id="dlgWrap">
+    <div class="dlg">
+      <div class="fp-title"><span id="dlgTitle">message.exe</span><span class="fp-x" id="dlgX">✕</span></div>
+      <div class="dlg-body">
+        <div id="dlgIcon"></div>
+        <p id="dlgMsg"></p>
+      </div>
+      <button class="pbtn" id="dlgOk">OK ♡</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ============================================================
+     THEMES
+  ============================================================ */
+  const THEMES={
+    pink:  {label:'pink ♡',  hot:'#e84393', soft:'#f7a6cd', softer:'#fbd0e6', chrome:'#fbe3ee', chromeDark:'#eebcd2', bevL:'#fff4fa', bevD:'#c2849f', bevDD:'#8f5570', ink:'#3a2230', sub:'#8f3c66', gA:'#fdd6eb', gB:'#f7a8c4', gC:'#e84393'},
+    lilac: {label:'lilac ☾', hot:'#8e6fd8', soft:'#b9a5ec', softer:'#ddd2f6', chrome:'#e9e2f8', chromeDark:'#d2c4ef', bevL:'#f7f3ff', bevD:'#9d8cc4', bevDD:'#67588f', ink:'#2e2440', sub:'#5d4a8a', gA:'#e8defb', gB:'#bda7ef', gC:'#7e5bd0'},
+    sky:   {label:'sky ☁',   hot:'#3d9df0', soft:'#8cc4f7', softer:'#cfe7fc', chrome:'#e2f0fc', chromeDark:'#c3ddf3', bevL:'#f3faff', bevD:'#83a8c9', bevDD:'#4f6f8f', ink:'#1e2c3a', sub:'#36678f', gA:'#dbeefe', gB:'#9ccdf6', gC:'#2f86d6'},
+    mint:  {label:'mint ✿',  hot:'#2fbf8f', soft:'#7fdcbb', softer:'#c5f2e1', chrome:'#e0f7ee', chromeDark:'#bfe9d7', bevL:'#f0fdf8', bevD:'#7fb3a0', bevDD:'#4d7a6a', ink:'#1f3329', sub:'#2f6e58', gA:'#d7f7ea', gB:'#8fe3c4', gC:'#1ea876'},
+    cyber: {label:'cyber ⌁', hot:'#6f6f86', soft:'#9d9db2', softer:'#c9c9d8', chrome:'#dcdce6', chromeDark:'#c0c0ce', bevL:'#f2f2f8', bevD:'#8f8fa2', bevDD:'#55556a', ink:'#1d1d28', sub:'#4c4c64', gA:'#d9d9e4', gB:'#a0a0b6', gC:'#55556e'}
+  };
+  function applyTheme(name){
+    const t=THEMES[name]; if(!t) return;
+    const r=document.documentElement.style;
+    r.setProperty('--hot',t.hot);
+    r.setProperty('--soft',t.soft);
+    r.setProperty('--softer',t.softer);
+    r.setProperty('--chrome',t.chrome);
+    r.setProperty('--chrome-dark',t.chromeDark);
+    r.setProperty('--bevel-light',t.bevL);
+    r.setProperty('--bevel-dark',t.bevD);
+    r.setProperty('--bevel-darker',t.bevDD);
+    r.setProperty('--ink',t.ink);
+    r.setProperty('--sub',t.sub);
+    r.setProperty('--grad-a',t.gA);
+    r.setProperty('--grad-b',t.gB);
+    r.setProperty('--grad-c',t.gC);
+    try{localStorage.setItem('gp-theme',name);}catch(e){}
+  }
+  const themePop=document.getElementById('themePop');
+  Object.keys(THEMES).forEach(function(name){
+    const b=document.createElement('button');
+    b.className='theme-item';
+    b.innerHTML='<span class="tdot" style="background:linear-gradient(135deg,'+THEMES[name].soft+','+THEMES[name].hot+')"></span>'+THEMES[name].label;
+    b.addEventListener('click',function(){
+      applyTheme(name);
+      themePop.classList.remove('open');
+      setStatus('new fit who dis ♡');
+    });
+    themePop.appendChild(b);
+  });
+  document.getElementById('btnTheme').addEventListener('click',function(){
+    themePop.classList.toggle('open');
+  });
+  try{
+    const saved=localStorage.getItem('gp-theme');
+    if(saved && THEMES[saved]) applyTheme(saved);
+  }catch(e){}
+
+  /* ============================================================
+     DESKTOP ICONS (pixel-art SVG, click for a y2k message)
+  ============================================================ */
+  function pixSVG(map, size){
+    const gw=map.rows[0].length, gh=map.rows.length;
+    let r='';
+    map.rows.forEach(function(row,y){
+      for(let x=0;x<row.length;x++){
+        const ch=row[x];
+        if(ch!=='.') r+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+map.pal[ch]+'"/>';
+      }
+    });
+    return '<svg viewBox="0 0 '+gw+' '+gh+'" width="'+size+'" height="'+size+'" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">'+r+'</svg>';
+  }
+  const ICONS=[
+    {id:"cd", label:"mix cd", side:"left",
+     map:{pal:{"k": "#4a4a5e", "s": "#dfe5ec", "H": "#8d99a8", "r": "#ff6b8a", "y": "#ffd24d", "g": "#5fd068", "b": "#5aa9ff", "p": "#c47dff", "u": "#c9ced6", "d": "#8d96a3", "w": "#ffffff"},
+      rows:[".....kkkkkk.....", "...kkryybgskk...", "..krryybgsssk...", "..kyybgssssspk..", ".kybgssHHsssspk.", ".kbgsssHHssssbk.", "..kgsssssssspk..", "..kssssssssspk..", "...kkssssskk....", "kkkkkkkkkkkkkkkk", "kuuuuuuuuuuuuuuk", "kudddddddddduuuk", "kuuuuuuuuuuuuuuk", "kuukkkkkkkkkuuuk", "kuuuuuuuuuugduuk", "kkkkkkkkkkkkkkkk"]},
+     msgs:["now burning: 18 tracks of pure feelings. do not skip track 7 ♡", "700 megabytes of vibes, zero skips. you’re welcome.", "this mix is for driving nowhere in particular ♡"]},
+    {id:"folder", label:"my stuff", side:"left",
+     map:{pal:{"o": "#c98f1f", "y": "#ffd966", "w": "#ffe9a8"},
+      rows:["................", "................", "..oooooo........", "..owwwwwo.......", "..owyyyywoooooo.", "..oyyyyyyyyyyyo.", "..oyyyyyyyyyyyo.", "..oyyyyyyyyyyyo.", "..oyyyyyyyyyyyo.", "..oyyyyyyyyyyyo.", "..oyyyyyyyyyyyo.", "..oyyyyyyyyyyyo.", "..ooooooooooooo.", "................", "................", "................"]},
+     msgs:["contents: glitter, receipts, and one (1) secret. as if i’d show you ♡", "this folder is full and thriving.", "sorted by vibe, not by date ♡"]},
+    {id:"globe", label:"the web", side:"left",
+     map:{pal:{"k": "#23386e", "b": "#3b86ff", "g": "#43c463", "c": "#9adcff", "m": "#3d3d52", "l": "#dff2ff", "q": "#8a5fc4", "w": "#ffffff"},
+      rows:[".....kkkkk......", "...kkbgbbckk....", "..kcbggbbbbck...", "..kbgggbbgbbk...", ".kbbggbbbgggbk..", ".kbgbbcbbbggbk..", ".kbbgbbbbbgbbk..", ".kcbbggbbbbbck..", "..kbbgbmmmmm....", "..kcbbmllllwm...", "...kkml.lllllm..", ".....ml.llll.m..", ".....mllllllm...", "......mmmmmqq...", "...........qqq..", "............qq.."]},
+     msgs:["surfing the world wide web… it’s giving infinite ♡", "you’ve got mail. probably. eventually. dial-up takes a sec.", "the internet is a mall and every store is open ♡"]},
+    {id:"bin", label:"recycle", side:"left",
+     map:{pal:{"p": "#ffffff", "d": "#7d8694", "u": "#cfd4dc", "e": "#2ea84f", "f": "#e9ecf1"},
+      rows:["...pp..ppp.p....", "..pfppppfpppp...", ".pppfppppppfpp..", ".dddddddddddddd.", ".duuuuuuuuuuuud.", ".duuueeuuueuuud.", "..duueuueeuuud..", "..duueuuuueuud..", "..duueeuueeuud..", "...duuueeuuud...", "...duuuuuuuud...", "...duuuuuuuud...", "....duuuuuud....", "....dddddddd....", "................", "................"]},
+     msgs:["as if! i would never delete you ♡", "one girl’s trash is another girl’s aesthetic.", "empty? in this economy? we keep everything ♡"]},
+    {id:"pc", label:"my pc", side:"left",
+     map:{pal:{"d": "#8f8672", "c": "#e8e0cf", "s": "#3b6ef0", "w": "#ffffff", "n": "#b8b09c"},
+      rows:["..dddddddddddd..", "..dccccccccccd..", "..dcsssssssscd..", "..dcswwsssssscd.", "..dcssssswsscd..", "..dcsssssssscd..", "..dccccccccccd..", "..dddddddddddd..", ".......dcd......", "....dddddddd....", "..dddddddddddd..", "..dccccnnccccd..", "..dcwwcccccccd..", "..dddddddddddd..", "................", "................"]},
+     msgs:["this pc runs on glitter and attitude.", "486 megahertz of pure sass ♡", "do not turn me off. i’m thinking ♡"]},
+    {id:"lock", label:"secrets", side:"left",
+     map:{pal:{"o": "#a87b14", "l": "#f4c430", "h": "#ffe9a0", "p": "#f08bbf", "q": "#c45a92"},
+      rows:[".......ooooo....", "......oo...oo...", "......o.....o...", "......o.....o...", ".....ooooooooo..", ".....olllllllo..", ".....ollhhlllo..", ".....olloolllo..", ".....olloolllo..", ".....olllllllo..", ".....ooooooooo..", ".ppp............", "pp.pp...........", "pp.ppqqqqqq.....", ".ppp...q..q.....", "................"]},
+     msgs:["password hint: it’s totally not “princess”. okay it is ♡", "your secrets are safe with me, bestie.", "locked. like my whole vibe ♡"]},
+    {id:"eraser", label:"undo it", side:"right",
+     map:{pal:{"w": "#ffe4f1", "p": "#ff9ec6", "q": "#d96aa0", "k": "#a44a78"},
+      rows:["................", "................", "................", "....kkkkkkkkk...", "...kwwwwwwwwqk..", "..kwwppppppqqk..", "..kwpppppppqk...", "..kwpppppppqk...", "..kwpppppppqk...", "..kqqqqqqqqqk...", "...kkkkkkkkk....", "................", "................", "................", "................", "................"]},
+     msgs:["mistakes? we simply buff them out ♡", "ctrl+z but make it fashion.", "erased. it literally never happened ♡"]},
+    {id:"paintpc", label:"paint", side:"right",
+     map:{pal:{"k": "#8f4a74", "p": "#f7a6cd", "w": "#ffffff", "r": "#ff6b8a", "y": "#ffd24d", "b": "#5aa9ff", "g": "#5fd068", "m": "#e87ab0"},
+      rows:["..kkkkkkkkkkkk..", "..kppppppppppk..", "..kpwwwwwwwwpk..", "..kpwrrywwbwpk..", "..kpwrywwbbwpk..", "..kpwwwgwwwwpk..", "..kpwwggwwmwpk..", "..kpwwwwwwwwpk..", "..kppppppppppk..", "..kkkkkkkkkkkk..", ".......kpk......", "....kkkkkkkk....", "...kppppppppk...", "...kkkkkkkkkk...", "................", "................"]},
+     msgs:["painting my masterpiece. it’s you. you’re the masterpiece ♡", "every pixel placed with intention and drama.", "gallery opening at 7, dress iconic ♡"]},
+    {id:"mag", label:"search", side:"right",
+     map:{pal:{"k": "#3d3d52", "l": "#dff2ff", "w": "#ffffff", "q": "#8a5fc4"},
+      rows:["................", "....kkkkk.......", "...klllllk......", "..klwlllllk.....", "..klwlllllk.....", "..klllllllk.....", "..klllllllk.....", "...klllllk......", "....kkkkk.......", "........kq......", ".........qq.....", "..........qq....", "...........qq...", "............qq..", "................", "................"]},
+     msgs:["searching… found it: your whole vibe ♡", "zoom in. now zoom in more. flawless.", "results: 1 of 1 — main character located ♡"]},
+    {id:"dino", label:"rawr.exe", side:"right",
+     map:{pal:{"k": "#2e2e38", "w": "#ffffff"},
+      rows:["........kkkkkk..", "........kkwkkk..", "........kkkkkk..", "........kkk.....", "........kkkkk...", ".k......kkk.....", ".kk....kkkkkk...", ".kkk..kkkkkk....", "..kkkkkkkkkk....", "..kkkkkkkkk.....", "...kkkkkkkk.....", "....kkkkkk......", ".....kkkkk......", ".....kk..kk.....", ".....k....k.....", ".....kk...kk...."]},
+     msgs:["rawr means “no wifi” in dinosaur ♡", "err 404: boredom not found.", "i survived the meteor for THIS? amazing actually ♡"]}
+  ];
+  const dlgWrap=document.getElementById('dlgWrap');
+  const dlgMsg=document.getElementById('dlgMsg');
+  const dlgTitle=document.getElementById('dlgTitle');
+  const dlgIcon=document.getElementById('dlgIcon');
+  function openDlg(icon){
+    dlgTitle.textContent=icon.id+'.exe';
+    dlgIcon.innerHTML=pixSVG(icon.map,44);
+    dlgMsg.textContent=icon.msgs[Math.floor(Math.random()*icon.msgs.length)];
+    dlgWrap.classList.add('open');
+  }
+  function closeDlg(){ dlgWrap.classList.remove('open'); }
+  document.getElementById('dlgOk').addEventListener('click',closeDlg);
+  document.getElementById('dlgX').addEventListener('click',closeDlg);
+  dlgWrap.addEventListener('click',function(e){ if(e.target===dlgWrap) closeDlg(); });
+
+  ICONS.forEach(function(icon){
+    const b=document.createElement('button');
+    b.className='dicon';
+    b.innerHTML=pixSVG(icon.map,82)+'<span class="dlabel">'+icon.label+'</span>';
+    b.addEventListener('click',function(){ openDlg(icon); });
+    document.getElementById(icon.side==='left'?'iconsLeft':'iconsRight').appendChild(b);
+  });
+
+  /* ============================================================
+     COLOR MATRIX ENGINE (matches the CSS filter spec)
+  ============================================================ */
+  function compose(A,B){
+    const m=new Array(9), o=new Array(3);
+    for(let r=0;r<3;r++){
+      for(let c=0;c<3;c++){
+        m[r*3+c]=A.m[r*3]*B.m[c] + A.m[r*3+1]*B.m[3+c] + A.m[r*3+2]*B.m[6+c];
+      }
+      o[r]=A.m[r*3]*B.o[0] + A.m[r*3+1]*B.o[1] + A.m[r*3+2]*B.o[2] + A.o[r];
+    }
+    return {m,o};
+  }
+  function lerpToMat(target, a){
+    const id=[1,0,0, 0,1,0, 0,0,1], m=new Array(9);
+    for(let i=0;i<9;i++) m[i]=id[i]*(1-a)+target[i]*a;
+    return {m, o:[0,0,0]};
+  }
+  const SEPIA_M=[0.393,0.769,0.189, 0.349,0.686,0.168, 0.272,0.534,0.131];
+  const GRAY_M =[0.2126,0.7152,0.0722, 0.2126,0.7152,0.0722, 0.2126,0.7152,0.0722];
+
+  const OP={
+    brightness:{ mat:b=>({m:[b,0,0, 0,b,0, 0,0,b], o:[0,0,0]}), css:b=>'brightness('+b+')' },
+    contrast:{ mat:k=>({m:[k,0,0, 0,k,0, 0,0,k], o:[127.5*(1-k),127.5*(1-k),127.5*(1-k)]}), css:k=>'contrast('+k+')' },
+    saturate:{
+      mat:s=>({m:[
+        0.213+0.787*s, 0.715-0.715*s, 0.072-0.072*s,
+        0.213-0.213*s, 0.715+0.285*s, 0.072-0.072*s,
+        0.213-0.213*s, 0.715-0.715*s, 0.072+0.928*s
+      ], o:[0,0,0]}),
+      css:s=>'saturate('+s+')'
+    },
+    hueRotate:{
+      mat:deg=>{
+        const t=deg*Math.PI/180, c=Math.cos(t), si=Math.sin(t);
+        return {m:[
+          0.213+c*0.787-si*0.213, 0.715-c*0.715-si*0.715, 0.072-c*0.072+si*0.928,
+          0.213-c*0.213+si*0.143, 0.715+c*0.285+si*0.140, 0.072-c*0.072-si*0.283,
+          0.213-c*0.213-si*0.787, 0.715-c*0.715+si*0.715, 0.072+c*0.928+si*0.072
+        ], o:[0,0,0]};
+      },
+      css:deg=>'hue-rotate('+deg+'deg)'
+    },
+    sepia:{ mat:a=>lerpToMat(SEPIA_M,a), css:a=>'sepia('+a+')' },
+    grayscale:{ mat:a=>lerpToMat(GRAY_M,a), css:a=>'grayscale('+a+')' },
+    invert:{ mat:a=>({m:[1-2*a,0,0, 0,1-2*a,0, 0,0,1-2*a], o:[255*a,255*a,255*a]}), css:a=>'invert('+a+')' },
+    blur:{ mat:null, css:px=>'blur('+px+'px)' }
+  };
+  function cssFor(ops){
+    if(!ops || !ops.length) return 'none';
+    return ops.map(([name,p])=>OP[name].css(p)).join(' ');
+  }
+
+  /* ---- fast gaussian-ish blur (3 box passes) ---- */
+  function boxesForGauss(sigma,n){
+    const wIdeal=Math.sqrt((12*sigma*sigma/n)+1);
+    let wl=Math.floor(wIdeal); if(wl%2===0) wl--;
+    const wu=wl+2;
+    const mIdeal=(12*sigma*sigma - n*wl*wl - 4*n*wl - 3*n)/(-4*wl-4);
+    const m=Math.round(mIdeal);
+    const out=[];
+    for(let i=0;i<n;i++) out.push(((i<m?wl:wu)-1)/2);
+    return out;
+  }
+  function boxBlurPass(src,dst,w,h,r,horizontal){
+    const len=horizontal?w:h, lines=horizontal?h:w;
+    const stride=horizontal?4:w*4, lineStride=horizontal?w*4:4;
+    const div=r*2+1;
+    for(let li=0; li<lines; li++){
+      const start=li*lineStride;
+      for(let ch=0; ch<3; ch++){
+        let sum=0;
+        for(let i=-r;i<=r;i++){
+          const idx=Math.min(len-1,Math.max(0,i));
+          sum+=src[start+idx*stride+ch];
+        }
+        for(let i=0;i<len;i++){
+          dst[start+i*stride+ch]=sum/div;
+          const addI=Math.min(len-1,i+r+1), subI=Math.max(0,i-r);
+          sum+=src[start+addI*stride+ch]-src[start+subI*stride+ch];
+        }
+      }
+      for(let i=0;i<len;i++) dst[start+i*stride+3]=src[start+i*stride+3];
+    }
+  }
+  function blurData(data,w,h,px){
+    if(px<0.3) return;
+    const radii=boxesForGauss(px*0.6,3);
+    const b=new Uint8ClampedArray(data.length);
+    radii.forEach(function(r){
+      r=Math.max(0,Math.round(r));
+      boxBlurPass(data,b,w,h,r,true);
+      boxBlurPass(b,data,w,h,r,false);
+    });
+  }
+
+  /* ============================================================
+     PIXEL FX
+  ============================================================ */
+  const THERMAL=(function(){
+    const stops=[[0,5,0,60],[64,120,0,170],[128,255,40,90],[190,255,160,0],[232,255,235,90],[255,255,255,240]];
+    const R=new Uint8ClampedArray(256),G=new Uint8ClampedArray(256),B=new Uint8ClampedArray(256);
+    for(let i=0;i<256;i++){
+      let s=0; while(s<stops.length-2 && i>stops[s+1][0]) s++;
+      const a=stops[s],b=stops[s+1];
+      const t=(i-a[0])/((b[0]-a[0])||1);
+      R[i]=a[1]+(b[1]-a[1])*t; G[i]=a[2]+(b[2]-a[2])*t; B[i]=a[3]+(b[3]-a[3])*t;
+    }
+    return {R,G,B};
+  })();
+
+  const FXFN={
+    noise:function(d,w,h,amt){
+      for(let i=0;i<d.length;i+=4){
+        const n=(Math.random()-0.5)*2*amt;
+        d[i]+=n; d[i+1]+=n; d[i+2]+=n;
+      }
+    },
+    colornoise:function(d,w,h,amt){
+      for(let i=0;i<d.length;i+=4){
+        d[i]+=(Math.random()-0.5)*2*amt;
+        d[i+1]+=(Math.random()-0.5)*2*amt;
+        d[i+2]+=(Math.random()-0.5)*2*amt;
+      }
+    },
+    scanlines:function(d,w,h,str){
+      const f=1-str;
+      for(let y=2;y<h;y+=3){
+        let i=y*w*4;
+        for(let x=0;x<w;x++,i+=4){ d[i]*=f; d[i+1]*=f; d[i+2]*=f; }
+      }
+    },
+    rgbshift:function(d,w,h,frac){
+      const px=Math.max(1,Math.round(w*frac));
+      const src=new Uint8ClampedArray(d);
+      for(let y=0;y<h;y++){
+        const row=y*w*4;
+        for(let x=0;x<w;x++){
+          const i=row+x*4;
+          const xr=Math.min(w-1,x+px), xb=Math.max(0,x-px);
+          d[i]=src[row+xr*4];
+          d[i+2]=src[row+xb*4+2];
+        }
+      }
+    },
+    tint:function(d,w,h,p){
+      for(let i=0;i<d.length;i+=4){ d[i]+=p[0]; d[i+1]+=p[1]; d[i+2]+=p[2]; }
+    },
+    vignette:function(d,w,h,str){
+      const cx=w/2, cy=h/2, maxd=Math.sqrt(cx*cx+cy*cy);
+      for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+          const dx=x-cx, dy=y-cy;
+          const f=Math.max(0,1-str*Math.pow(Math.sqrt(dx*dx+dy*dy)/maxd,2.2));
+          const i=(y*w+x)*4;
+          d[i]*=f; d[i+1]*=f; d[i+2]*=f;
+        }
+      }
+    },
+    bloom:function(d,w,h,str){
+      const hl=new Uint8ClampedArray(d.length);
+      for(let i=0;i<d.length;i+=4){
+        const lum=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+        const k=lum>195 ? (lum-195)/60 : 0;
+        hl[i]=d[i]*k; hl[i+1]=d[i+1]*k; hl[i+2]=d[i+2]*k; hl[i+3]=255;
+      }
+      blurData(hl,w,h,Math.max(2,w*0.008));
+      for(let i=0;i<d.length;i+=4){
+        d[i]   = 255-(255-d[i])  *(255-hl[i]  *str)/255;
+        d[i+1] = 255-(255-d[i+1])*(255-hl[i+1]*str)/255;
+        d[i+2] = 255-(255-d[i+2])*(255-hl[i+2]*str)/255;
+      }
+    },
+    glitch:function(d,w,h,v){
+      const src=new Uint8ClampedArray(d);
+      const slabs=Math.round(3+v*16);
+      for(let s=0;s<slabs;s++){
+        const sy=Math.floor(Math.random()*h);
+        const sh=Math.max(2,Math.floor(Math.random()*h*0.045));
+        const shift=Math.round((Math.random()-0.5)*2*w*0.13*v);
+        if(!shift) continue;
+        for(let y=sy;y<Math.min(h,sy+sh);y++){
+          const row=y*w*4;
+          for(let x=0;x<w;x++){
+            const sx=Math.min(w-1,Math.max(0,x-shift));
+            const di=row+x*4, si=row+sx*4;
+            d[di]=src[si]; d[di+1]=src[si+1]; d[di+2]=src[si+2];
+          }
+        }
+      }
+      FXFN.rgbshift(d,w,h,0.004*v);
+    },
+    pixelate:function(d,w,h,v){
+      const block=Math.max(2,Math.round(w*(0.004+v*0.0004)));
+      for(let by=0;by<h;by+=block){
+        const ye=Math.min(h,by+block);
+        for(let bx=0;bx<w;bx+=block){
+          const xe=Math.min(w,bx+block);
+          let r=0,g=0,b=0,n=0;
+          for(let y=by;y<ye;y++){
+            let i=(y*w+bx)*4;
+            for(let x=bx;x<xe;x++,i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++; }
+          }
+          r/=n; g/=n; b/=n;
+          for(let y=by;y<ye;y++){
+            let i=(y*w+bx)*4;
+            for(let x=bx;x<xe;x++,i+=4){ d[i]=r; d[i+1]=g; d[i+2]=b; }
+          }
+        }
+      }
+    },
+    posterize:function(d,w,h,v){
+      const levels=Math.max(2,Math.round(16-v*0.13));
+      const step=255/(levels-1);
+      const lut=new Uint8ClampedArray(256);
+      for(let i=0;i<256;i++) lut[i]=Math.round(Math.round(i/step)*step);
+      for(let i=0;i<d.length;i+=4){ d[i]=lut[d[i]]; d[i+1]=lut[d[i+1]]; d[i+2]=lut[d[i+2]]; }
+    },
+    thermal:function(d,w,h,m){
+      for(let i=0;i<d.length;i+=4){
+        const lum=Math.min(255,Math.max(0,Math.round(0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2])));
+        d[i]  =d[i]  *(1-m)+THERMAL.R[lum]*m;
+        d[i+1]=d[i+1]*(1-m)+THERMAL.G[lum]*m;
+        d[i+2]=d[i+2]*(1-m)+THERMAL.B[lum]*m;
+      }
+    },
+    duotone:function(d,w,h,p){
+      const lo=p.lo, hi=p.hi, m=p.m;
+      for(let i=0;i<d.length;i+=4){
+        const t=(0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2])/255;
+        d[i]  =d[i]  *(1-m)+(lo[0]+(hi[0]-lo[0])*t)*m;
+        d[i+1]=d[i+1]*(1-m)+(lo[1]+(hi[1]-lo[1])*t)*m;
+        d[i+2]=d[i+2]*(1-m)+(lo[2]+(hi[2]-lo[2])*t)*m;
+      }
+    },
+    sparkle:function(d,w,h,v){
+      const arm=Math.max(2,Math.round(w*0.007));
+      const grid=Math.max(4,Math.round(w*0.018));
+      for(let y=grid;y<h-grid;y+=grid){
+        for(let x=grid;x<w-grid;x+=grid){
+          const i=(y*w+x)*4;
+          const lum=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+          if(lum>208 && Math.random()<v*0.55){
+            for(let a=-arm;a<=arm;a++){
+              const fall=1-Math.abs(a)/arm;
+              const add=255*fall*fall;
+              let ii=(y*w+x+a)*4;
+              d[ii]+=add; d[ii+1]+=add; d[ii+2]+=add;
+              ii=((y+a)*w+x)*4;
+              d[ii]+=add; d[ii+1]+=add; d[ii+2]+=add;
+            }
+          }
+        }
+      }
+    },
+    curves:function(d,w,h,luts){
+      const lr=luts.r, lg=luts.g, lb=luts.b;
+      for(let i=0;i<d.length;i+=4){
+        d[i]=lr[d[i]]; d[i+1]=lg[d[i+1]]; d[i+2]=lb[d[i+2]];
+      }
+    }
+  };
+
+  function bakePipeline(imgData, pipe){
+    let M=null, blurPx=0;
+    (pipe.ops||[]).forEach(function(op){
+      if(op[0]==='blur'){ blurPx+=op[1]; return; }
+      const m=OP[op[0]].mat(op[1]);
+      M = M ? compose(m,M) : m;
+    });
+    const d=imgData.data;
+    if(M){
+      const m=M.m, o=M.o;
+      for(let i=0;i<d.length;i+=4){
+        const r=d[i], g=d[i+1], b=d[i+2];
+        d[i]  = m[0]*r+m[1]*g+m[2]*b+o[0];
+        d[i+1]= m[3]*r+m[4]*g+m[5]*b+o[1];
+        d[i+2]= m[6]*r+m[7]*g+m[8]*b+o[2];
+      }
+    }
+    if(blurPx>0) blurData(d, imgData.width, imgData.height, blurPx);
+    (pipe.fx||[]).forEach(function(f){
+      FXFN[f[0]](d, imgData.width, imgData.height, f[1]);
+    });
+  }
+
+  /* ============================================================
+     EDITS & FILTERS
+  ============================================================ */
+  const EDITS={
+    brightness:{label:'brightness', min:0, max:200, def:100, ops:v=>[['brightness',v/100]]},
+    contrast:  {label:'contrast',   min:0, max:200, def:100, ops:v=>[['contrast',v/100]]},
+    saturation:{label:'saturation', min:0, max:200, def:100, ops:v=>[['saturate',v/100]]},
+    hue:       {label:'hue shift',  min:0, max:360, def:0,   ops:v=>[['hueRotate',v]]},
+    blur:      {label:'blur',       min:0, max:100, def:0,   ops:v=>[['blur',v/12]]}
+  };
+
+  const FILTERS={
+    vhs: v=>({
+      ops:[['saturate',1+v*0.003],['contrast',1-v*0.0012],['brightness',1+v*0.0005]],
+      fx:[['rgbshift',v*0.00006],['scanlines',v*0.0035],['noise',v*0.16]]
+    }),
+    digicam: v=>({
+      ops:[['contrast',1+v*0.0032],['brightness',1+v*0.0014],['saturate',1+v*0.0018]],
+      fx:[['tint',[-v*0.05, v*0.01, v*0.07]],['colornoise',v*0.07]]
+    }),
+    ccd: v=>({
+      ops:[['saturate',1+v*0.0026],['contrast',1+v*0.0008]],
+      fx:[['tint',[v*0.06, v*0.02, -v*0.04]],['bloom',v*0.009],['noise',v*0.09]]
+    }),
+    glitch: v=>({
+      ops:[['contrast',1+v*0.001]],
+      fx:[['glitch',v/100]]
+    }),
+    pixelate: v=>({ ops:[], fx:[['pixelate',v]] }),
+    posterize: v=>({ ops:[['saturate',1+v*0.002]], fx:[['posterize',v]] }),
+    thermal: v=>({ ops:[], fx:[['thermal',v/100]] }),
+    sparkle: v=>({
+      ops:[['saturate',1+v*0.0015],['brightness',1+v*0.0006]],
+      fx:[['sparkle',v/100]]
+    }),
+    angelcore: v=>({
+      ops:[['brightness',1+v*0.0012],['blur',v/120]],
+      fx:[['duotone',{m:v*0.0085, lo:[243,184,212], hi:[255,252,255]}]]
+    }),
+    film: v=>({
+      ops:[['sepia',v*0.0025],['contrast',1+v*0.0015],['saturate',1-v*0.001]],
+      fx:[['noise',v*0.2],['vignette',v*0.0035]]
+    }),
+    lomo: v=>({
+      ops:[['saturate',1+v*0.006],['contrast',1+v*0.0038]],
+      fx:[['vignette',v*0.0065]]
+    }),
+    dollcore: v=>({ops:[['sepia',v*0.0055],['hueRotate',290+v*0.2],['saturate',1+v*0.009],['brightness',1+v*0.0008]], fx:[]}),
+    vamp:     v=>({ops:[['contrast',1+v*0.0045],['saturate',1+v*0.003],['hueRotate',-v*0.25],['brightness',1-v*0.0018]], fx:[]}),
+    sunbleach:v=>({ops:[['sepia',v*0.0045],['brightness',1+v*0.0022],['contrast',1-v*0.0018],['saturate',1-v*0.0025]], fx:[]}),
+    icy:      v=>({ops:[['hueRotate',v*1.6],['saturate',1-v*0.0035],['brightness',1+v*0.0012]], fx:[]}),
+    vaporwave:v=>({ops:[['hueRotate',v*2.6],['saturate',1+v*0.011],['contrast',1+v*0.0015]], fx:[]}),
+    sepia:    v=>({ops:[['sepia',v/100]], fx:[]}),
+    noir:     v=>({ops:[['grayscale',v/100],['contrast',1+v*0.0025]], fx:[]}),
+    dreamy:   v=>({ops:[['blur',v/45],['brightness',1+v*0.0014],['saturate',1+v*0.002],['sepia',v*0.001]], fx:[]})
+  };
+
+  /* ============================================================
+     STATE
+  ============================================================ */
+  const canvas=document.getElementById('photo');
+  const ctx=canvas.getContext('2d');
+  let base=document.createElement('canvas');
+  let previewBase=null;
+  let hasImage=false;
+  let originalBlob=null;
+  let mode=null;
+  let modeSliders=[];
+
+  const fileInput=document.getElementById('fileInput');
+  const loadHint=document.getElementById('loadHint');
+  const filterPanel=document.getElementById('filterPanel');
+  const curvePanel=document.getElementById('curvePanel');
+  const galleryPanel=document.getElementById('galleryPanel');
+  const galGrid=document.getElementById('galGrid');
+  const paletteEl=document.getElementById('palette');
+  const intensityEl=document.getElementById('intensity');
+  const sliderStack=document.getElementById('sliderStack');
+  const intLabel=document.getElementById('intLabel');
+  const statusEl=document.getElementById('statusbar');
+  const title=document.getElementById('winTitle');
+  function setStatus(t){ statusEl.textContent=t; }
+
+  /* ---------- curves state ---------- */
+  const defaultPts=()=>[[0,0],[255,255]];
+  let curvePts={rgb:defaultPts(), r:defaultPts(), g:defaultPts(), b:defaultPts()};
+  let activeCh='rgb';
+
+  function curveLUT(pts){
+    const p=pts.slice().sort((a,b)=>a[0]-b[0]);
+    const lut=new Uint8ClampedArray(256);
+    const get=i=>p[Math.max(0,Math.min(p.length-1,i))];
+    let seg=0;
+    for(let x=0;x<256;x++){
+      while(seg<p.length-2 && x>p[seg+1][0]) seg++;
+      const p0=get(seg-1),p1=get(seg),p2=get(seg+1),p3=get(seg+2);
+      const span=(p2[0]-p1[0])||1;
+      let t=(x-p1[0])/span; t=Math.max(0,Math.min(1,t));
+      const t2=t*t,t3=t2*t;
+      lut[x]=0.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3);
+    }
+    return lut;
+  }
+  function buildLUTs(){
+    const master=curveLUT(curvePts.rgb);
+    const mk=ch=>{
+      const own=curveLUT(curvePts[ch]);
+      const out=new Uint8ClampedArray(256);
+      for(let i=0;i<256;i++) out[i]=own[master[i]];
+      return out;
+    };
+    return {r:mk('r'), g:mk('g'), b:mk('b')};
+  }
+  function curvesAreDefault(){
+    return ['rgb','r','g','b'].every(ch=>{
+      const p=curvePts[ch];
+      return p.length===2 && p[0][0]===0 && p[0][1]===0 && p[1][0]===255 && p[1][1]===255;
+    });
+  }
+
+  /* ---------- pipeline for current mode ---------- */
+  function sliderVal(i){ return modeSliders[i] ? +modeSliders[i].value : 0; }
+  function currentPipe(){
+    if(!mode) return {ops:[],fx:[]};
+    if(mode.kind==='edit')  return {ops:EDITS[mode.name].ops(sliderVal(0)), fx:[]};
+    if(mode.kind==='filter')return FILTERS[mode.name](sliderVal(0));
+    if(mode.kind==='hsl'){
+      return {ops:[
+        ['hueRotate', sliderVal(0)],
+        ['saturate',  sliderVal(1)/100],
+        ['brightness',sliderVal(2)/100]
+      ], fx:[]};
+    }
+    if(mode.kind==='curves'){
+      if(curvesAreDefault()) return {ops:[],fx:[]};
+      return {ops:[], fx:[['curves', buildLUTs()]]};
+    }
+    return {ops:[],fx:[]};
+  }
+
+  /* ---------- render ---------- */
+  let rafPending=false;
+  function scheduleRender(){
+    if(rafPending) return;
+    rafPending=true;
+    requestAnimationFrame(function(){ rafPending=false; render(); });
+  }
+  function render(){
+    if(!hasImage) return;
+    const pipe=currentPipe();
+    if(pipe.fx.length){
+      canvas.width=previewBase.width; canvas.height=previewBase.height;
+      const pctx=previewBase.getContext('2d');
+      const id=pctx.getImageData(0,0,previewBase.width,previewBase.height);
+      bakePipeline(id,pipe);
+      ctx.putImageData(id,0,0);
+      canvas.style.filter='none';
+    }else{
+      canvas.width=base.width; canvas.height=base.height;
+      ctx.drawImage(base,0,0);
+      canvas.style.filter=cssFor(pipe.ops);
+    }
+  }
+  function refreshPreviewBase(){
+    const MAXP=640;
+    const k=Math.min(1, MAXP/Math.max(base.width,base.height));
+    const pc=document.createElement('canvas');
+    pc.width=Math.max(1,Math.round(base.width*k));
+    pc.height=Math.max(1,Math.round(base.height*k));
+    pc.getContext('2d').drawImage(base,0,0,pc.width,pc.height);
+    previewBase=pc;
+  }
+  function bakeCurrentIntoBase(){
+    const pipe=currentPipe();
+    if(pipe.ops.length || pipe.fx.length){
+      const bctx=base.getContext('2d');
+      const id=bctx.getImageData(0,0,base.width,base.height);
+      bakePipeline(id,pipe);
+      bctx.putImageData(id,0,0);
+    }
+    canvas.style.filter='none';
+    refreshPreviewBase();
+  }
+  function bakedCopy(){
+    const out=document.createElement('canvas');
+    out.width=base.width; out.height=base.height;
+    const octx=out.getContext('2d');
+    octx.drawImage(base,0,0);
+    const pipe=currentPipe();
+    if(pipe.ops.length || pipe.fx.length){
+      const id=octx.getImageData(0,0,out.width,out.height);
+      bakePipeline(id,pipe);
+      octx.putImageData(id,0,0);
+    }
+    return out;
+  }
+
+  /* ============================================================
+     LOAD IMAGE
+  ============================================================ */
+  function loadBlob(blob, name){
+    if(!blob) return;
+    const img=new Image();
+    img.onload=function(){
+      const MAX=1400;
+      let w=img.width,h=img.height;
+      if(Math.max(w,h)>MAX){const k=MAX/Math.max(w,h); w=Math.round(w*k); h=Math.round(h*k);}
+      base=document.createElement('canvas');
+      base.width=w; base.height=h;
+      base.getContext('2d').drawImage(img,0,0,w,h);
+      hasImage=true;
+      originalBlob=blob;
+      refreshPreviewBase();
+      canvas.style.display='block';
+      loadHint.style.display='none';
+      exitMode(true); closePanels();
+      render();
+      buildPalette();
+      title.textContent=(name||'untitled')+' - GlitterPaint ♡';
+      setStatus('loaded! pick a tool on the left. ♡');
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror=function(){ setStatus('hmm, that pic wouldn\u2019t open ♡'); };
+    img.src=URL.createObjectURL(blob);
+  }
+  document.getElementById('btnLoad').addEventListener('click',function(){fileInput.click();});
+  loadHint.addEventListener('click',function(){fileInput.click();});
+  fileInput.addEventListener('change',function(e){
+    const f=e.target.files[0];
+    if(f && f.type.indexOf('image/')===0) loadBlob(f, f.name);
+    else setStatus('that wasn\u2019t a pic… try again ♡');
+  });
+  const zone=document.getElementById('canvasZone');
+  zone.addEventListener('dragover',function(e){e.preventDefault();});
+  zone.addEventListener('drop',function(e){
+    e.preventDefault();
+    const f=e.dataTransfer.files[0];
+    if(f) loadBlob(f, f.name);
+  });
+
+  /* ============================================================
+     PALETTE
+  ============================================================ */
+  function buildPalette(){
+    paletteEl.innerHTML='';
+    const N=28, S=48;
+    const off=document.createElement('canvas');
+    off.width=S; off.height=S;
+    off.getContext('2d').drawImage(base,0,0,S,S);
+    const data=off.getContext('2d').getImageData(0,0,S,S).data;
+    const cols=[];
+    const step=Math.max(1,Math.floor((S*S)/(N*3)));
+    for(let p=0;p<S*S;p+=step){
+      const i=p*4;
+      cols.push([data[i],data[i+1],data[i+2]]);
+    }
+    const toHsl=function(c){
+      let r=c[0]/255,g=c[1]/255,b=c[2]/255;
+      const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0;
+      const l=(mx+mn)/2, d=mx-mn;
+      if(d){
+        if(mx===r)h=((g-b)/d)%6;
+        else if(mx===g)h=(b-r)/d+2;
+        else h=(r-g)/d+4;
+        h*=60; if(h<0)h+=360;
+      }
+      return [h,l];
+    };
+    cols.sort(function(a,b){const A=toHsl(a),B=toHsl(b); return A[0]-B[0] || A[1]-B[1];});
+    const picked=[];
+    for(let i=0;i<N;i++) picked.push(cols[Math.floor(i*cols.length/N)]);
+    const hx=function(c){return '#'+c.map(function(x){return x.toString(16).padStart(2,'0');}).join('');};
+    picked.forEach(function(c){
+      const hex=hx(c);
+      const d=document.createElement('div');
+      d.className='cube';
+      d.style.background=hex;
+      d.title=hex;
+      d.addEventListener('click',function(){
+        document.getElementById('ccA').style.background=hex;
+        setStatus('sampled '+hex+' ♡');
+      });
+      paletteEl.appendChild(d);
+    });
+    if(picked.length){
+      document.getElementById('ccA').style.background=hx(picked[0]);
+      document.getElementById('ccB').style.background=hx(picked[picked.length-1]);
+    }
+  }
+  function emptyPalette(){
+    paletteEl.innerHTML='';
+    for(let i=0;i<28;i++){
+      const d=document.createElement('div'); d.className='cube';
+      d.style.background=i%2?'var(--chrome)':'var(--chrome-dark)';
+      paletteEl.appendChild(d);
+    }
+  }
+  emptyPalette();
+
+  /* ============================================================
+     MODE / SLIDER STACK
+  ============================================================ */
+  function buildSliders(defs){
+    sliderStack.innerHTML='';
+    modeSliders=[];
+    defs.forEach(function(d){
+      const row=document.createElement('div');
+      row.className='srow';
+      const lab=document.createElement('span');
+      lab.className='sl';
+      lab.textContent=d.label||'';
+      const inp=document.createElement('input');
+      inp.type='range'; inp.min=d.min; inp.max=d.max; inp.value=d.def;
+      inp.addEventListener('input',scheduleRender);
+      row.appendChild(lab); row.appendChild(inp);
+      sliderStack.appendChild(row);
+      modeSliders.push(inp);
+    });
+  }
+  function enterMode(kind,name){
+    mode={kind:kind,name:name};
+    if(kind==='edit'){
+      const e=EDITS[name];
+      intLabel.textContent='✦ '+e.label+' ✦';
+      buildSliders([{min:e.min,max:e.max,def:e.def}]);
+    }else if(kind==='filter'){
+      intLabel.textContent='✦ '+name+' intensity ✦';
+      buildSliders([{min:0,max:100,def:70}]);
+    }else if(kind==='hsl'){
+      intLabel.textContent='✦ HSL ✦';
+      buildSliders([
+        {label:'hue',        min:-180,max:180,def:0},
+        {label:'saturation', min:0,   max:200,def:100},
+        {label:'lightness',  min:0,   max:200,def:100}
+      ]);
+    }else if(kind==='curves'){
+      intLabel.textContent='✦ curves ✦';
+      buildSliders([]);
+      curvePts={rgb:defaultPts(), r:defaultPts(), g:defaultPts(), b:defaultPts()};
+      setChannel('rgb');
+      curvePanel.classList.add('open');
+      drawCurveUI();
+    }
+    paletteEl.style.display='none';
+    intensityEl.classList.add('show');
+    render();
+    setStatus(kind==='curves' ? 'bend the line ♡ Done to keep it' : 'slide it… then hit Done to keep it ♡');
+  }
+  function exitMode(silent){
+    intensityEl.classList.remove('show');
+    paletteEl.style.display='grid';
+    curvePanel.classList.remove('open');
+    mode=null; modeSliders=[];
+    if(!silent) render();
+  }
+
+  document.getElementById('btnDone').addEventListener('click',function(){
+    if(!mode) return;
+    setStatus('applying… ✨');
+    setTimeout(function(){
+      bakeCurrentIntoBase();
+      exitMode(true);
+      render();
+      buildPalette();
+      setStatus('applied! so cute. ♡');
+    },20);
+  });
+  document.getElementById('btnCancel').addEventListener('click',function(){
+    exitMode();
+    setStatus('nvm, undone ♡');
+  });
+
+  /* ============================================================
+     CURVES UI
+  ============================================================ */
+  const cCanvas=document.getElementById('curveCanvas');
+  const cCtx=cCanvas.getContext('2d');
+  const CH_COLORS={rgb:'#3a2230', r:'#c0392b', g:'#27ae60', b:'#2980b9'};
+
+  function setChannel(ch){
+    activeCh=ch;
+    document.querySelectorAll('.chbtn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.ch===ch);
+    });
+    drawCurveUI();
+  }
+  document.querySelectorAll('.chbtn').forEach(function(b){
+    b.addEventListener('click',function(){ setChannel(b.dataset.ch); });
+  });
+  document.getElementById('curveReset').addEventListener('click',function(){
+    curvePts[activeCh]=defaultPts();
+    drawCurveUI();
+    scheduleRender();
+  });
+
+  function drawCurveUI(){
+    const W=cCanvas.width, H=cCanvas.height;
+    cCtx.clearRect(0,0,W,H);
+    cCtx.strokeStyle='#e9e0ea';
+    cCtx.lineWidth=1;
+    for(let i=1;i<4;i++){
+      cCtx.beginPath(); cCtx.moveTo(W*i/4,0); cCtx.lineTo(W*i/4,H); cCtx.stroke();
+      cCtx.beginPath(); cCtx.moveTo(0,H*i/4); cCtx.lineTo(W,H*i/4); cCtx.stroke();
+    }
+    cCtx.strokeStyle='#cdbcd2';
+    cCtx.setLineDash([4,4]);
+    cCtx.beginPath(); cCtx.moveTo(0,H); cCtx.lineTo(W,0); cCtx.stroke();
+    cCtx.setLineDash([]);
+    const lut=curveLUT(curvePts[activeCh]);
+    cCtx.strokeStyle=CH_COLORS[activeCh];
+    cCtx.lineWidth=2;
+    cCtx.beginPath();
+    for(let x=0;x<256;x++){
+      const px=x/255*W, py=H - lut[x]/255*H;
+      if(x===0) cCtx.moveTo(px,py); else cCtx.lineTo(px,py);
+    }
+    cCtx.stroke();
+    curvePts[activeCh].forEach(function(p){
+      const px=p[0]/255*W, py=H-p[1]/255*H;
+      cCtx.fillStyle='#fff';
+      cCtx.strokeStyle=CH_COLORS[activeCh];
+      cCtx.lineWidth=2;
+      cCtx.beginPath(); cCtx.arc(px,py,5,0,Math.PI*2); cCtx.fill(); cCtx.stroke();
+    });
+  }
+
+  let dragIdx=-1, lastTap={t:0,i:-1};
+  function evtToVal(e){
+    const r=cCanvas.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width*255;
+    const y=(1-(e.clientY-r.top)/r.height)*255;
+    return [Math.max(0,Math.min(255,x)), Math.max(0,Math.min(255,y))];
+  }
+  function nearestPoint(v){
+    const pts=curvePts[activeCh];
+    let best=-1, bd=22;
+    pts.forEach(function(p,i){
+      const d=Math.hypot(p[0]-v[0], p[1]-v[1]);
+      if(d<bd){bd=d; best=i;}
+    });
+    return best;
+  }
+  cCanvas.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    cCanvas.setPointerCapture(e.pointerId);
+    const v=evtToVal(e);
+    let i=nearestPoint(v);
+    const now=Date.now();
+    if(i>=0 && lastTap.i===i && now-lastTap.t<320){
+      const pts=curvePts[activeCh];
+      if(i>0 && i<pts.length-1){
+        pts.splice(i,1);
+        dragIdx=-1; lastTap={t:0,i:-1};
+        drawCurveUI(); scheduleRender();
+        return;
+      }
+    }
+    lastTap={t:now,i:i};
+    if(i<0){
+      const pts=curvePts[activeCh];
+      if(pts.length<8){
+        pts.push([v[0],v[1]]);
+        pts.sort(function(a,b){return a[0]-b[0];});
+        i=pts.findIndex(function(p){return p[0]===v[0]&&p[1]===v[1];});
+      }
+    }
+    dragIdx=i;
+    if(dragIdx>=0) movePoint(v);
+  });
+  cCanvas.addEventListener('pointermove',function(e){
+    if(dragIdx<0) return;
+    e.preventDefault();
+    movePoint(evtToVal(e));
+  });
+  function endDrag(){ dragIdx=-1; }
+  cCanvas.addEventListener('pointerup',endDrag);
+  cCanvas.addEventListener('pointercancel',endDrag);
+  function movePoint(v){
+    const pts=curvePts[activeCh];
+    const p=pts[dragIdx];
+    if(!p) return;
+    if(dragIdx===0) p[1]=v[1];
+    else if(dragIdx===pts.length-1) p[1]=v[1];
+    else{
+      const lo=pts[dragIdx-1][0]+2, hi=pts[dragIdx+1][0]-2;
+      p[0]=Math.max(lo,Math.min(hi,v[0]));
+      p[1]=v[1];
+    }
+    drawCurveUI();
+    scheduleRender();
+  }
+
+  /* ============================================================
+     TOOLS
+  ============================================================ */
+  function needPic(){
+    if(!hasImage){setStatus('load a pic first, bestie ♡'); return true;}
+    return false;
+  }
+  function closePanels(){
+    filterPanel.classList.remove('open');
+    galleryPanel.classList.remove('open');
+    themePop.classList.remove('open');
+    document.getElementById('btnFilters').classList.remove('active');
+  }
+  document.querySelectorAll('.float-panel .fp-x').forEach(function(x){
+    x.addEventListener('click',function(){
+      const id=x.dataset.close;
+      document.getElementById(id).classList.remove('open');
+      document.getElementById('btnFilters').classList.remove('active');
+      if(id==='curvePanel' && mode && mode.kind==='curves'){
+        exitMode();
+        setStatus('curves closed ♡');
+      }
+    });
+  });
+
+  document.getElementById('btnFilters').addEventListener('click',function(){
+    if(needPic())return;
+    if(mode) exitMode(true);
+    galleryPanel.classList.remove('open');
+    const open=filterPanel.classList.toggle('open');
+    this.classList.toggle('active',open);
+    render();
+    if(open) setStatus('pick a filter ✨');
+  });
+  document.querySelectorAll('.filter-item').forEach(function(b){
+    b.addEventListener('click',function(){
+      closePanels();
+      enterMode('filter',b.dataset.filter);
+    });
+  });
+  document.querySelectorAll('[data-edit]').forEach(function(b){
+    b.addEventListener('click',function(){
+      if(needPic())return;
+      if(mode) exitMode(true);
+      closePanels();
+      enterMode('edit',b.dataset.edit);
+    });
+  });
+  document.querySelectorAll('[data-mode]').forEach(function(b){
+    b.addEventListener('click',function(){
+      if(needPic())return;
+      if(mode) exitMode(true);
+      closePanels();
+      enterMode(b.dataset.mode, b.dataset.mode);
+    });
+  });
+
+  function bakeTransform(draw){
+    const tmp=document.createElement('canvas');
+    draw(tmp);
+    base=tmp;
+    refreshPreviewBase();
+    if(mode) exitMode(true);
+    render(); buildPalette();
+  }
+  function bakeInstantPipe(pipe){
+    const bctx=base.getContext('2d');
+    const id=bctx.getImageData(0,0,base.width,base.height);
+    bakePipeline(id,pipe);
+    bctx.putImageData(id,0,0);
+    refreshPreviewBase();
+    if(mode) exitMode(true);
+    render(); buildPalette();
+  }
+  const INSTANT={
+    rotate:function(){ bakeTransform(function(t){
+      t.width=base.height; t.height=base.width;
+      const c=t.getContext('2d');
+      c.translate(t.width/2,t.height/2); c.rotate(Math.PI/2);
+      c.drawImage(base,-base.width/2,-base.height/2);
+    }); setStatus('spun it ↻ ♡'); },
+    flipH:function(){ bakeTransform(function(t){
+      t.width=base.width; t.height=base.height;
+      const c=t.getContext('2d'); c.translate(t.width,0); c.scale(-1,1); c.drawImage(base,0,0);
+    }); setStatus('mirror mirror ♡'); },
+    flipV:function(){ bakeTransform(function(t){
+      t.width=base.width; t.height=base.height;
+      const c=t.getContext('2d'); c.translate(0,t.height); c.scale(1,-1); c.drawImage(base,0,0);
+    }); setStatus('upside down ♡'); },
+    invert:function(){ bakeInstantPipe({ops:[['invert',1]],fx:[]}); setStatus('inverted! spooky ♡'); },
+    gray:function(){ bakeInstantPipe({ops:[['grayscale',1]],fx:[]}); setStatus('noir mode ♡'); },
+    reset:function(){
+      if(originalBlob) loadBlob(originalBlob,'untitled');
+      setStatus('back to the original ♡');
+    }
+  };
+  document.querySelectorAll('[data-instant]').forEach(function(b){
+    b.addEventListener('click',function(){
+      if(needPic())return;
+      closePanels();
+      INSTANT[b.dataset.instant]();
+    });
+  });
+
+  /* ============================================================
+     GALLERY (IndexedDB)
+  ============================================================ */
+  let db=null;
+  const req=indexedDB.open('glitterpaint',1);
+  req.onupgradeneeded=function(e){
+    e.target.result.createObjectStore('pics',{keyPath:'id',autoIncrement:true});
+  };
+  req.onsuccess=function(e){ db=e.target.result; };
+  req.onerror=function(){ setStatus('gallery unavailable on this browser ♡'); };
+
+  function galPut(blob,cb){
+    if(!db)return;
+    const tx=db.transaction('pics','readwrite');
+    tx.objectStore('pics').add({blob:blob,date:Date.now()});
+    tx.oncomplete=cb;
+  }
+  function galAll(cb){
+    if(!db){cb([]);return;}
+    const out=[];
+    const tx=db.transaction('pics','readonly');
+    tx.objectStore('pics').openCursor(null,'prev').onsuccess=function(e){
+      const cur=e.target.result;
+      if(cur){ out.push(cur.value); cur.continue(); }
+      else cb(out);
+    };
+  }
+  function galDelete(id,cb){
+    if(!db)return;
+    const tx=db.transaction('pics','readwrite');
+    tx.objectStore('pics').delete(id);
+    tx.oncomplete=cb;
+  }
+  function renderGallery(){
+    galAll(function(items){
+      galGrid.innerHTML='';
+      if(!items.length){
+        galGrid.innerHTML='<div class="gal-empty">nothing saved yet —<br>hit <b>Save</b> after editing ♡</div>';
+        return;
+      }
+      items.forEach(function(it){
+        const wrap=document.createElement('div');
+        wrap.className='gal-item';
+        const img=document.createElement('img');
+        img.src=URL.createObjectURL(it.blob);
+        const row=document.createElement('div');
+        row.className='gal-actions';
+        const mk=function(txt,fn,titleTxt){
+          const b=document.createElement('button');
+          b.textContent=txt; b.title=titleTxt;
+          b.addEventListener('click',fn);
+          return b;
+        };
+        row.appendChild(mk('↩',function(){ loadBlob(it.blob,'from gallery'); closePanels(); },'open in editor'));
+        row.appendChild(mk('⤴',function(){ shareBlob(it.blob); },'share'));
+        row.appendChild(mk('⬇',function(){ downloadBlob(it.blob); },'download'));
+        row.appendChild(mk('✕',function(){ galDelete(it.id, renderGallery); setStatus('deleted ♡'); },'delete'));
+        wrap.appendChild(img);
+        wrap.appendChild(row);
+        galGrid.appendChild(wrap);
+      });
+    });
+  }
+  document.getElementById('btnGallery').addEventListener('click',function(){
+    filterPanel.classList.remove('open');
+    curvePanel.classList.remove('open');
+    themePop.classList.remove('open');
+    document.getElementById('btnFilters').classList.remove('active');
+    const open=galleryPanel.classList.toggle('open');
+    if(open){ renderGallery(); setStatus('your saved pics — stored right in this browser ♡'); }
+  });
+
+  /* ============================================================
+     SAVE & SHARE
+  ============================================================ */
+  function downloadBlob(blob){
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='glitterpaint.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
+  }
+  function shareBlob(blob){
+    const file=new File([blob],'glitterpaint.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], title:'made with GlitterPaint ♡'})
+        .then(function(){ setStatus('shared! ♡'); })
+        .catch(function(){ setStatus('share cancelled ♡'); });
+    }else{
+      downloadBlob(blob);
+      setStatus('no share sheet here, downloaded instead ♡');
+    }
+  }
+  document.getElementById('btnSave').addEventListener('click',function(){
+    if(needPic())return;
+    setStatus('saving… ✨');
+    setTimeout(function(){
+      bakedCopy().toBlob(function(blob){
+        if(!blob){ setStatus('save failed, try again ♡'); return; }
+        downloadBlob(blob);
+        galPut(blob,function(){ setStatus('saved to downloads + gallery ♡'); });
+      },'image/png');
+    },20);
+  });
+  document.getElementById('btnShare').addEventListener('click',function(){
+    if(needPic())return;
+    setStatus('getting it ready… ✨');
+    setTimeout(function(){
+      bakedCopy().toBlob(function(blob){
+        if(blob) shareBlob(blob);
+      },'image/png');
+    },20);
+  });
+
+  /* ============================================================
+     close button easter egg
+  ============================================================ */
+  let xClicks=0;
+  document.getElementById('btnClose').addEventListener('click',function(){
+    xClicks++;
+    setStatus(xClicks<3 ? 'you can\u2019t close me, we\u2019re besties ♡' : 'fine… jk. never leaving. ♡');
+  });
+})();
+</script>
+</body>
+</html>
